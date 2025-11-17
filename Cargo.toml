@@ -1,0 +1,13 @@
+[package]
+name = "no_std"
+version = "0.1.0"
+authors = ["Silver","add_your_names_here","or_handles"]
+edition = "2024"
+
+[dependencies]
+bootloader = "0.9"
+
+[[bin]]
+name = "no_std"
+test = false
+bench = false
