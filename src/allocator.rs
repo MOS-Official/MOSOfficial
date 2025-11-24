@@ -1,23 +1,25 @@
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr::null_mut;
+use core::cell::Cell; // this lets us change `next` safely
 
 pub struct BumpAllocator{ //the struct that gave me mental issues
   heap_start: usize,
   heap_end: usize,
-  next: usize,
+  next: Cell<usize>, //Cell justs saves us a metric ton of errors so please dont touch it if you do fix it after
 }
 
 impl BumpAllocator { //makes the allocator actually work i cant really explain it i barely understand structs myself
   pub unsafe fn set_heap(&mut self, start: usize, size: usize){
     self.heap_start = start;
     self.heap_end = start + size;
-    self.next = start;
+    self.next.set(start);
+    return; //it returns wow shocker
   }
 }
 
 unsafe impl GlobalAlloc for BumpAllocator { //adding properties to the struct
   unsafe fn alloc(&self, layout: Layout) -> *mut u8{
-    let current = self.next; 
+    let current = self.next.get(); 
     let alloc_start = align_up(current, layout.align()); //tidies up the memory
     let alloc_end = alloc_start + layout.size();
 
@@ -26,7 +28,7 @@ unsafe impl GlobalAlloc for BumpAllocator { //adding properties to the struct
     }
 
     //if there is space then we update next so we dont push twice in the same place
-    self.next = alloc_end;
+    self.next.set(alloc_end);
 
     //now we return the address of the memory it gives
     return alloc_start as *mut u8; //yes it has to be as POINTER mutable u8 
@@ -50,6 +52,7 @@ let aligned = (address + alignment - 1) & !(alignment - 1);
 return aligned;
 }
 
+use spin::Mutex;
 //make shit global i wanna_cry pun intended
 #[global_allocator]
 pub static ALLOCATOR: BumpAllocator = BumpAllocator {
@@ -57,5 +60,5 @@ pub static ALLOCATOR: BumpAllocator = BumpAllocator {
 //but i know its job is to and i quote myself "make shit global"
   heap_start: 0,
   heap_end: 0,
-  next: 0,
+  next: Cell::new(0),
 };

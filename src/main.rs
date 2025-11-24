@@ -24,7 +24,10 @@ entry_point!(kernel_main); //the function that runs first in the code
 fn kernel_main(_boot_info: &'static BootInfo) -> ! {
   //NOW WE CAN FINALLY USE HASHMAPS <3
   //AM HAPPY
-  ALLOCATOR.set_heap(0x_4444_0000, 1024 * 1024); //1MB heap i dont understand the math behind it but if we want more good luck
+  unsafe { //rust is a bitch
+    ALLOCATOR.lock().set_heap(0x_4444_0000, 1024 * 1024); //1MB heap i dont understand the math behind it but if we want more good luck
+  }
+  
   loop {} //keeps the cpu busy so no auto shutdown
 }
 
